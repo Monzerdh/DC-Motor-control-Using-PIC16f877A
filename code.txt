@@ -1,0 +1,34 @@
+unsigned int ADR;
+
+void main() {
+     PORTC = 0;
+     TRISC = 0; //all PORTC pins output
+     PORTA = 0;
+     TRISA = 0x01; //RA0 input for pot
+     CMCON = 7; //Disable analog comparators
+     T2CON = 0; //Prescaler 1:1, TMR2 off
+     ADCON1 = 14; //AN0 only analog
+     ADC_Init(); //mikroC initializes ADC
+     CCP1CON = 12; //PWM mode
+     PR2 = 249; //16kHz PWM frequency
+     while (1){
+           ADR = ADC_Get_Sample(0) >> 2; //Get ADC reading for channel 0
+           //and divide reading by 4
+           if (ADR < 10){ //Setting lower bound
+              TMR2ON_bit = 0; //Stop Timer and so stop PWM
+              TMR2 = 0; //Clear Timer
+              RC2_bit = 0; //Clear PWM output
+           }
+           else{
+                if (ADR > 240){ //Setting upper bound
+                   TMR2ON_bit = 0; //Stop Timer and so stop PWM
+                   TMR2 = 0; //Clear Timer
+                   RC2_bit = 1; //Keep PWM output high
+                }
+                else{ //Within upper and lower bounds
+                      CCPR1L = ADR; //Set PWM duty cycle
+                      TMR2ON_bit = 1; //If not on, turn on TMR2. If on, keep on
+                }
+           }
+     }
+}
